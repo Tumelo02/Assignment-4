@@ -11,7 +11,7 @@ def main(page: ft.Page):
 
     # Components
     moisture_txt = ft.Text("Soil Moisture: --", size=20)
-    rain_txt = ft.Text("Rain Status: --", size=20, color=ft.colors.BLUE)
+    rain_txt = ft.Text("Rain Status: --", size=20, color=ft.Colors.BLUE)
 
     pump_swi = ft.Switch(label="Water Pump", value=False)
     angle_sli = ft.Slider(min=0, max=180, divisions=18, label="{value}°", value=90)
