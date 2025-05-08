@@ -3,31 +3,26 @@ import urequests
 import time
 from machine import Pin, ADC, PWM
 
-# WiFi Credentials
-SSID = "eduroam"
-PASSWORD = "Cybertee02"
+def connect_wifi():
+    import network, time
 
-wifi = network.WLAN(network.STA_IF)
-wifi.active(True)
+    SSID = "eduroam"
+    PASSWORD = "Cybertee02"
 
-print("Connecting to WiFi...")
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(SSID, PASSWORD)
 
-wifi.connect(SSID, PASSWORD)
-
-# Wait for the connection
-timeout = 10  # seconds
-start_time = time.time()
-while not wifi.isconnected():
-    if time.time() - start_time > timeout:
-        print("Connection failed! Timeout.")
-        break
-    time.sleep(1)
-
-if wifi.isconnected():
-    print("WiFi connected!")
-    print(wifi.ifconfig())  # Print IP address
-else:
-    print("Failed to connect to WiFi")
+    print("Connecting to WiFi...")
+    timeout = 10
+    for i in range(timeout):
+        if wlan.isconnected():
+            print("Connected!")
+            print("IP:", wlan.ifconfig()[0])
+            return True
+        time.sleep(1)
+    print("Connection failed! Timeout.")
+    return False
 
 # Flask API Endpoints
 BACKEND_HOST = "http://127.0.0.1:5000"
