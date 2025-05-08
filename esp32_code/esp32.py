@@ -4,8 +4,8 @@ import time
 from machine import Pin, ADC, PWM
 
 # WiFi Credentials
-SSID = "YOUR_WIFI_SSID"
-PASSWORD = "YOUR_WIFI_PASSWORD"
+SSID = "eduroam"
+PASSWORD = "Cyber@tee02"
 
 # Flask API Endpoints
 BACKEND_HOST = "http://127.0.0.1:5000"
