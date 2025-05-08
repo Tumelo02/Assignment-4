@@ -7,6 +7,28 @@ from machine import Pin, ADC, PWM
 SSID = "eduroam"
 PASSWORD = "Cyber@tee02"
 
+wifi = network.WLAN(network.STA_IF)
+wifi.active(True)
+
+print("Connecting to WiFi...")
+
+wifi.connect(SSID, PASSWORD)
+
+# Wait for the connection
+timeout = 10  # seconds
+start_time = time.time()
+while not wifi.isconnected():
+    if time.time() - start_time > timeout:
+        print("Connection failed! Timeout.")
+        break
+    time.sleep(1)
+
+if wifi.isconnected():
+    print("WiFi connected!")
+    print(wifi.ifconfig())  # Print IP address
+else:
+    print("Failed to connect to WiFi")
+    
 # Flask API Endpoints
 BACKEND_HOST = "http://127.0.0.1:5000"
 POST_DATA_URL = f"{BACKEND_HOST}/data"
