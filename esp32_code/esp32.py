@@ -4,8 +4,8 @@ import time
 from machine import Pin, ADC, PWM
 
 # WiFi Credentials
-SSID = "eduroam"
-PASSWORD = "Cybertee02"
+SSID = "A15"
+PASSWORD = "12345678"
 
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
