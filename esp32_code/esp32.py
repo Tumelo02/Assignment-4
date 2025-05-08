@@ -5,7 +5,7 @@ from machine import Pin, ADC, PWM
 
 # WiFi Credentials
 SSID = "eduroam"
-PASSWORD = "Cyber@tee02"
+PASSWORD = "Cybertee02"
 
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
@@ -28,7 +28,7 @@ if wifi.isconnected():
     print(wifi.ifconfig())  # Print IP address
 else:
     print("Failed to connect to WiFi")
-    
+
 # Flask API Endpoints
 BACKEND_HOST = "http://127.0.0.1:5000"
 POST_DATA_URL = f"{BACKEND_HOST}/data"
