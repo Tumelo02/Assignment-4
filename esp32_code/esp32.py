@@ -30,7 +30,7 @@ else:
     print("Failed to connect to WiFi")
 
 # Flask API Endpoints
-BACKEND_HOST = "http://192.168.231.100:5000"
+BACKEND_HOST = "http://192.168.231.47:5000"
 POST_DATA_URL = f"{BACKEND_HOST}/data"
 GET_CONTROL_URL = f"{BACKEND_HOST}/control"
 
