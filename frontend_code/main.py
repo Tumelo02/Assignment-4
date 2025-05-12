@@ -8,7 +8,7 @@ BACKEND_URL = "http://127.0.0.1:5000"  # PC ip addressS
 
 def main(page: ft.Page):
     # === Page Setup ===
-    page.title = "Smart Farm Dashboard"
+    page.title = "Smart Garden Dashboard"
     page.window_width = 800
     page.window_height = 600
     page.bgcolor = ft.Colors.BLACK

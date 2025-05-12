@@ -35,11 +35,11 @@ POST_DATA_URL = f"{BACKEND_HOST}/data"
 GET_CONTROL_URL = f"{BACKEND_HOST}/control"
 
 # GPIO Pins
-soil_moisture_pin = ADC(Pin(34))      # A0
-soil_moisture_pin.atten(ADC.ATTN_11DB)  # Full range: 0-3.3V
+soil_moi_pin = ADC(Pin(34))      # A0
+soil_moi_pin.atten(ADC.ATTN_11DB)  # Full range: 0-3.3V
 
-rain_sensor = Pin(18, Pin.IN)         # D5
-water_pump = Pin(22, Pin.OUT)         # D22 (Relay)
+rain_sen = Pin(18, Pin.IN)         # D5
+water_pum = Pin(22, Pin.OUT)         # D22 (Relay)
 servo = PWM(Pin(21), freq=50)         # D21 (Servo PWM)
 
 # Helper: Connect to WiFi
@@ -87,8 +87,8 @@ def run():
 
     while True:
         # Read sensors
-        moisture_value = soil_moisture_pin.read()
-        rain_detected = 1 if rain_sensor.value() == 0 else 0  # active LOW
+        moisture_value = soil_moi_pin.read()
+        rain_detected = 1 if rain_sen.value() == 0 else 0  # active LOW
 
         print("Moisture:", moisture_value, "| Rain:", rain_detected)
 
@@ -99,7 +99,7 @@ def run():
         pump_state, angle = get_controls()
 
         # Apply controls
-        water_pump.value(pump_state)
+        water_pum.value(pump_state)
         servo.duty(angle_to_duty(angle))
 
         time.sleep(5)  # Delay between cycles
