@@ -3,121 +3,114 @@ import urequests
 import time
 from machine import Pin, ADC, PWM
 
-# === WiFi Credentials ===
-SSID = "A15"
-PASSWORD = "12345678"
+# === WiFi Configuration ===
+SSID = "A15"             # WiFi name
+PASSWORD = "12345678"    # WiFi password
 
-wifi = network.WLAN(network.STA_IF)
-wifi.active(True)
-
-print("Connecting to WiFi...")
-wifi.connect(SSID, PASSWORD)
-
-# Wait for the connection
-timeout = 10  # seconds
-start_time = time.time()
-while not wifi.isconnected():
-    if time.time() - start_time > timeout:
-        print("Connection failed! Timeout.")
-        break
-    time.sleep(1)
-
-if wifi.isconnected():
-    print("WiFi connected!")
-    print(wifi.ifconfig())  # Print IP address
-else:
-    print("Failed to connect to WiFi")
-
-# === Backend Configuration ===
-BACKEND_HOST = "http://192.168.231.47:5000"  # Update if IP changes
-POST_DATA_URL = f"{BACKEND_HOST}/data"
-GET_CONTROL_URL = f"{BACKEND_HOST}/control"
+# === Backend Server URLs ===
+BACKEND_HOST = "http://192.168.231.47:5000"  # Flask backend IP
+POST_DATA_URL = f"{BACKEND_HOST}/data"       # Endpoint for sending sensor data
+GET_CONTROL_URL = f"{BACKEND_HOST}/control"  # Endpoint for receiving control data
 
 # === GPIO Pin Setup ===
-soil_moi_pin = ADC(Pin(34))           # A0 - Soil moisture sensor
-soil_moi_pin.atten(ADC.ATTN_11DB)     # Full 0–3.3V range
+soil_sensor = ADC(Pin(34))           # Soil moisture sensor on ADC pin
+soil_sensor.atten(ADC.ATTN_11DB)     # Set ADC range to 0-3.3V
 
-rain_sen = Pin(18, Pin.IN)            # D18 - Rain sensor
-water_pum = Pin(22, Pin.OUT)          # D22 - Relay for water pump
-servo = PWM(Pin(21), freq=50)         # D21 - Servo motor (angle control)
+rain_sensor = Pin(18, Pin.IN)        # Rain sensor digital input (LOW = rain)
+pump = Pin(22, Pin.OUT)              # Water pump relay output
+servo = PWM(Pin(21), freq=50)        # Servo for sprinkler angle
 
-# === Moisture Threshold for Auto Mode ===
-dry_threshold = 2000  # Adjust based on testing
+# === System Constants ===
+DRY_THRESHOLD = 2000                 # Moisture reading below this = dry soil
 
-# === Helper Functions ===
+# === Helper Function: Convert angle to PWM duty cycle for servo ===
+def angle_to_duty(angle):
+    # Maps 0–180 degrees to servo PWM duty (typical servo range)
+    return int((angle / 180) * 102 + 26)
 
+# === Connect to WiFi ===
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
 
     print("Connecting to WiFi", end="")
+    timeout = 10
+    start = time.time()
+
     while not wlan.isconnected():
+        if time.time() - start > timeout:
+            print("\nFailed to connect: Timeout")
+            return False
         print(".", end="")
-        time.sleep(0.5)
-    print("\nConnected:", wlan.ifconfig())
+        time.sleep(1)
 
-def angle_to_duty(angle):
-    # Convert angle (0–180) to PWM duty (typically 26–128)
-    return int((angle / 180) * 102 + 26)
+    print("\nConnected to WiFi:", wlan.ifconfig())
+    return True
 
+# === Send sensor readings to Flask backend ===
 def send_sensor_data(moisture, rain):
     try:
-        response = urequests.post(POST_DATA_URL, json={
-            "moisture": moisture,
-            "rain": rain
-        })
+        payload = {"moisture": moisture, "rain": rain}
+        response = urequests.post(POST_DATA_URL, json=payload)
         response.close()
+        print("Sent sensor data:", payload)
     except Exception as e:
         print("Failed to POST data:", e)
 
+# === Get control settings from backend ===
 def get_controls():
     try:
         response = urequests.get(GET_CONTROL_URL)
         if response.status_code == 200:
             data = response.json()
-            return data.get("pump", 0), data.get("angle", 90)
-        response.close()
+            pump_state = data.get("pump", 0)
+            angle = data.get("angle", 90)
+            mode = data.get("mode", "auto")  
+            response.close()
+            return pump_state, angle, mode
     except Exception as e:
-        print("Failed to GET control:", e)
-    return 0, 90  # Fallback values
+        print("Failed to GET controls:", e)
+    return 0, 90, "auto"  # Fallback defaults
 
 # === Main Loop ===
-
 def run():
-    connect_wifi()
+    if not connect_wifi():
+        return  # Stop if WiFi failed
 
     while True:
-        # Read sensors
-        moisture_value = soil_moi_pin.read()
-        rain_detected = 1 if rain_sen.value() == 0 else 0  # Active LOW
+        # === Step 1: Read Sensors ===
+        moisture = soil_sensor.read()              # Raw analog value
+        rain = 1 if rain_sensor.value() == 0 else 0  # Active LOW = Rain Detected
 
-        print("Moisture:", moisture_value, "| Rain:", rain_detected)
+        print(f"\nMoisture: {moisture} | Rain: {'Yes' if rain else 'No'}")
 
-        # Send sensor data to backend
-        send_sensor_data(moisture_value, rain_detected)
+        # === Step 2: Send Sensor Data to Backend ===
+        send_sensor_data(moisture, rain)
 
-        # Get user control settings
-        pump_state, angle = get_controls()
+        # === Step 3: Receive Controls from Backend ===
+        pump_state, angle, mode = get_controls()
+        print(f"Mode: {mode} | Pump (Manual): {pump_state} | Sprinkler Angle: {angle}°")
 
-        # === Pump Decision Logic ===
-        if pump_state == 1:
-            # Manual ON by user
-            water_pum.value(1)
-            print("Pump: Forced ON by user")
+        # === Pump Control Logic ===
+        if mode == "manual":
+        # User manually controls pump
+            pump.value(1 if pump_state == 1 else 0)
+            print("Pump: Manual", "ON" if pump_state else "OFF")
         else:
-            # Auto mode based on soil moisture
-            if moisture_value < dry_threshold:
-                water_pum.value(1)
+            # Auto mode: Pump turns ON if soil is dry (moisture reading HIGH)
+            if moisture > DRY_THRESHOLD:
+                pump.value(1)
                 print("Pump: ON (Auto - Soil is dry)")
             else:
-                water_pum.value(0)
+                pump.value(0)
                 print("Pump: OFF (Auto - Soil is wet)")
 
-        # Set servo angle
+        # === Step 5: Move Servo to Desired Angle ===
         servo.duty(angle_to_duty(angle))
+        print(f"Sprinkler moved to {angle}°")
 
-        time.sleep(5)  # Delay between cycles
+        time.sleep(5)  # Delay between each update
 
-# === Start Program ===
+# === Start System ===
 run()
