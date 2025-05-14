@@ -157,9 +157,4 @@ def main(page: ft.Page):
 
 # === Launch the App ===
 if __name__ == "__main__":
-    ft.app(
-        target=main,
-        view=ft.WEB_BROWSER,       # Launch in web browser
-        port=8550,                 # Open port
-        host="0.0.0.0"             # Allow access from other devices on the network
-    )
+    ft.app(target=main)
