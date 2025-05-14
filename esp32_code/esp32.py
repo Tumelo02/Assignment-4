@@ -66,7 +66,7 @@ def get_controls():
             data = response.json()
             pump_state = data.get("pump", 0)
             angle = data.get("angle", 90)
-            mode = data.get("mode", "auto")  # NEW: Explicit mode field
+            mode = data.get("mode", "auto")  
             response.close()
             return pump_state, angle, mode
     except Exception as e:
