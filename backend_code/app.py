@@ -16,7 +16,8 @@ sensor_data = {
 # === Control State (from frontend or auto logic) ===
 control_state = {
     "pump": 0,            # Pump manual override (1 = force ON, 0 = auto)
-    "angle": 90           # Servo angle for sprinkler direction (0° to 180°)
+    "angle": 90,          # Servo angle for sprinkler direction (0° to 180°)
+    "mode": "auto"        # "manual" or "auto"                     
 }
 
 # === Moisture Calibration and Thresholds ===
@@ -41,13 +42,12 @@ def receive_data():
 @app.route("/control", methods=["GET", "POST"])
 def control():
     if request.method == "GET":
-        # Return current control settings (used by frontend)
         return jsonify(control_state), 200
 
-    # Update control settings (pump override or sprinkler angle)
     data = request.get_json()
     control_state["pump"] = data.get("pump", control_state["pump"])
     control_state["angle"] = data.get("angle", control_state["angle"])
+    control_state["mode"] = data.get("mode", control_state["mode"])  # NEW
 
     print(f"[CONTROL UPDATED] {control_state}")
     return jsonify({"status": "updated"}), 200
@@ -55,37 +55,33 @@ def control():
 # === Endpoint: Return System Status (moisture %, rain, pump status, etc.) ===
 @app.route("/status", methods=["GET"])
 def status():
-    raw_moisture = sensor_data.get("moisture", 0)
-    manual_override = control_state["pump"]
-
     # === Calculate Moisture Percentage ===
-    # 100% = very wet (0), 0% = very dry (4095)
-    clamped = min(max(raw_moisture, MOISTURE_MIN), MOISTURE_MAX)
-    moisture_percent = 100 - int((clamped - MOISTURE_MIN) / (MOISTURE_MAX - MOISTURE_MIN) * 100)
-    moisture_percent = max(0, min(moisture_percent, 100))  # Clamp to 0–100%
+    raw = sensor_data["moisture"]
+    percent = int(100 - ((raw - MOISTURE_MIN) / (MOISTURE_MAX - MOISTURE_MIN)) * 100)
+    percent = max(0, min(percent, 100))  # Clamp to 0–100%
 
-    # === Determine Pump Status (manual override vs auto logic) ===
-    if manual_override == 1:
-        pump_status = 1
-        mode = "manual"
-    else:
-        pump_status = 1 if moisture_percent < DRY_THRESHOLD_PERCENT else 0
-        mode = "auto"
+    # === Auto Mode Logic (with Rain Override) ===
+    if control_state["mode"] == "auto":
+        if sensor_data["rain"] == 1:
+            control_state["pump"] = 0  # Disable pump if raining
+            print("[AUTO MODE] Rain detected — pump disabled.")
+        else:
+            if percent < DRY_THRESHOLD_PERCENT:
+                control_state["pump"] = 1
+                print("[AUTO MODE] Soil dry — pump enabled.")
+            else:
+                control_state["pump"] = 0
+                print("[AUTO MODE] Soil moist — pump disabled.")
 
-    # Debug Output
-    print(f"[STATUS CHECK] Moisture Raw: {raw_moisture}, Moisture %: {moisture_percent}, Mode: {mode}, Pump: {'ON' if pump_status else 'OFF'}")
-
-    # === Return JSON Status Response to Frontend ===
     return jsonify({
-        "moisture": raw_moisture,
-        "moisture_percent": moisture_percent,
+        "moisture": raw,
+        "moisture_percent": percent,
         "rain": sensor_data["rain"],
-        "timestamp": sensor_data["timestamp"],
-        "pump_status": pump_status,
-        "mode": mode,
-        "angle": control_state["angle"]
+        "pump_status": control_state["pump"],
+        "angle": control_state["angle"],
+        "mode": control_state["mode"]
     }), 200
 
-# === Entry Point: Start Flask App ===
+# === Run Flask App ===
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True, host="0.0.0.0")

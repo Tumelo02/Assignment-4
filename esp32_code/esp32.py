@@ -66,7 +66,7 @@ def get_controls():
             data = response.json()
             pump_state = data.get("pump", 0)
             angle = data.get("angle", 90)
-            mode = data.get("mode", "auto")  
+            mode = data.get("mode", "auto")  # NEW: Explicit mode field
             response.close()
             return pump_state, angle, mode
     except Exception as e:
@@ -94,7 +94,7 @@ def run():
 
         # === Pump Control Logic ===
         if mode == "manual":
-        # User manually controls pump
+            # User manually controls pump ON/OFF from frontend
             pump.value(1 if pump_state == 1 else 0)
             print("Pump: Manual", "ON" if pump_state else "OFF")
         else:

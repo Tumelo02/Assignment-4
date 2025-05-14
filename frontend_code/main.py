@@ -142,15 +142,14 @@ def main(page: ft.Page):
     # === Send Manual Control Settings to Backend ===
     def send_controls():
         try:
-            control_data = {
-                "pump": int(pump_swi.value),   # 1 or 0
-                "angle": int(angle_sli.value),
-                "mode": "manual"               # Forces manual override
+            payload = {
+                "pump": 1 if pump_swi.value else 0,
+                "angle": angle_sli.value,
+                "mode": "manual" if pump_swi.value else "auto"  
             }
-            res = requests.post(f"{BACKEND_URL}/control", json=control_data)
-            print("Control updated:", res.json())
+            requests.post(f"{BACKEND_URL}/control", json=payload)
         except Exception as e:
-            print("Control send error:", e)
+            print("Send error:", e)
 
 
     # === Start Background Thread for Live Sensor Polling ===
@@ -158,4 +157,9 @@ def main(page: ft.Page):
 
 # === Launch the App ===
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER, port=8550)
+    ft.app(
+        target=main,
+        view=ft.WEB_BROWSER,       # Launch in web browser
+        port=8550,                 # Open port
+        host="0.0.0.0"             # Allow access from other devices on the network
+    )
