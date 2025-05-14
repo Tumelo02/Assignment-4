@@ -1,176 +1,197 @@
-System Overview
+# System Overview
 The Smart Garden System automates plant watering based on environmental conditions. It includes:
 
-ESP32 Microcontroller: Reads soil moisture and rain sensors, controls the water pump and sprinkler servo.
+- ESP32 Microcontroller: Reads soil moisture and rain sensors, controls the water pump and sprinkler servo.
 
-Flask Backend: Stores sensor readings, manages control logic, and exposes REST APIs.
+* Flask Backend: Stores sensor readings, manages control logic, and exposes REST APIs.
 
-Flet Frontend: Displays real-time data and allows users to manually control the pump and sprinkler angle.
++ Flet Frontend: Displays real-time data and allows users to manually control the pump and sprinkler angle.
 
-Dual Mode Operation:
+- Dual Mode Operation:
 
-Auto: Waters only when soil is dry and it's not raining.
+  * Auto: Waters only when soil is dry and it's not raining.
 
-Manual: User can override and control the system via dashboard.
+  + Manual: User can override and control the system via dashboard.
 
-Screenshots
-Flet Dashboard UI
+## Screenshots
 
-System Schematic Diagram
+### Flet Dashboard UI
+![Dashboard Screenshot](project_docmentation/UI_view.png)
 
-Flowchart
+### System Schematic Diagram
+![Dashboard Screenshot](project_docmentation/Schematic_Diagram.png)
 
+### Flowchart
+![Dashboard Screenshot](project_docmentation/Flow_chart.png)
 
- Folder Structure
-smart-garden-system/
-├── application/esp32_code/esp32.py    # MicroPython code for ESP32
-├── flask_app/app.py                   # Flask backend server
-├── flet_app/main.py                   # Flet frontend dashboard
-└── assets/farm.jpg                    # Images Background UI
-├── project_docmentation               # Images for schematic, Full UI, flowchart
-├── github_repo.txt
-├── requirements.txt                   # Python dependencies
-├── video_link.txt                     # Youtube video link
-└── README.md                          
+## Folder Structure
 
-System Components
+### smart-garden-system/
+- application/esp32_code/esp32.py   < MicroPython code for ESP32 >
+* flask_app/app.py                  < Flask backend server >
++ flet_app/main.py                  < Flet frontend dashboard >
+  - main.py                         < Flet frontend dashboard >
+  * assets/farm.jpg                 < Images Background UI >
+- project_docmentation              < Images for schematic, Full UI, flowchart >
+* github_repo.txt                   < Github repository link >
++ requirements.txt                  < Python dependencies >
+- video_link.txt                    < Youtube video link >
++ README.md                          
 
-Component	Description
-ESP32	WiFi-enabled microcontroller running MicroPython
-Soil Sensor	Analog moisture sensor (0-4095)
-Rain Sensor	Digital rain sensor (Active LOW)
-Water Pump	Controlled by GPIO Relay
-Servo Motor	Controls sprinkler spray angle (0°–180°)
-WiFi Network	For connecting ESP32 and server
-Flask App	Backend API and logic
-Flet Dashboard	Visual frontend with live updates
+## System Components
 
-Setup Instructions
+| Component  | Description |
+|:-----------|:-----------:|
+| ESP32      | WiFi-enabled microcontroller running MicroPython |
+| Soil  Sensor  |	Analog moisture sensor (0-4095)      |
+| Rain Sensor   | Digital rain sensor (Active LOW) |
+| Water Pump    | Controlled by GPIO Relay |
+| Servo Motor   | Controls sprinkler spray angle (0°–180°) |
+| WiFi Network  | For connecting ESP32 and server |
+| Flask App	    | Backend API and logic |
+| Flet Dashboard | Visual frontend with live update |
+
+## Setup Instructions
 1. Backend (Flask)
+
 pip install flask flask-cors
+
 python app.py
-Running at http://<my-PC-ip>:5000.
 
 2. ESP32 MicroPython Setup
-Flash MicroPython to your ESP32.
+- Flash MicroPython to your ESP32.
 
-Use mpremote to upload esp32_controller.py.
-
-Edit the following in the script:
+* Use mpremote to upload esp32_controller.py.
 
 SSID = "A15"
+
 PASSWORD = "12345678"
+
 BACKEND_HOST = "http://127.0.0.1:5000"
-Run the script on boot with boot.py or execute manually in CMD using mpremote.
+
+- Run the script on boot with boot.py or execute manually in CMD using mpremote.
 
 3. Frontend (Flet UI)
-Install dependencies and run:
+
 pip install flet requests
+
 python dashboard.py
-System Workflow
-Microcontroller (ESP32)
-Reads:
 
-Soil Moisture (ADC)
+## System Workflow
+### Microcontroller (ESP32)
 
-Rain (digital input)
+- Reads:
 
-Sends readings to POST /data
+  * Soil Moisture (ADC)
 
-Gets control state from GET /control
+  + Rain (digital input)
 
-Acts accordingly:
+- Sends readings to POST /data
 
-Auto: Turns pump ON if soil is dry
+* Gets control state from GET /control
 
-Manual: Responds to user override
++ Acts accordingly:
 
-Adjusts sprinkler angle via servo
+  - Auto: Turns pump ON if soil is dry
 
-Backend (Flask)
-Receives sensor data
+  * Manual: Responds to user override
 
-Stores state
+- Adjusts sprinkler angle via servo
 
-Returns control settings to ESP32
+### Backend (Flask)
 
-Implements auto logic:
+- Receives sensor data
 
-If rain is detected, pump is disabled
+* Stores state
 
-If moisture % < threshold, pump is enabled
++ Returns control settings to ESP32
 
-Exposes:
+- Implements auto logic:
 
-GET /status (for frontend)
+  * If rain is detected, pump is disabled
 
-GET/POST /control (for manual mode)
+  + If moisture % < threshold, pump is enabled
 
-Frontend (Flet)
-Displays live:
+- Exposes:
 
-Moisture level (raw and %)
+  * GET /status (for frontend)
 
-Rain status
+  + GET/POST /control (for manual mode)
 
-Pump status
+### Frontend (Flet)
 
-Allows user to:
+- Displays live:
 
-Toggle manual ON/OFF
+  * Moisture level (raw and %)
 
-Adjust sprinkler angle
+  + Rain status
 
-Send settings to backend
+  - Pump status
 
-API Endpoints
-Method	Endpoint	Description
-POST	/data	Receives sensor data
-GET	/control	Fetch current control state
-POST	/control	Update manual control settings
-GET	/status	Returns latest sensor + control
+* Allows user to:
 
-Control Logic Summary
-Mode	Pump Logic	Notes
-Auto	ON if soil is dry AND no rain	Based on moisture threshold
-Manual	User toggles ON/OFF via dashboard	Overrides auto behavior
+  + Toggle manual ON/OFF
 
-Future Improvements
-Add temperature/humidity sensors
+  - Adjust sprinkler angle
 
-Use cloud backend for remote access
+  * Send settings to backend
 
-Add push notifications/reminders
+### API Endpoints
 
-Host dashboard as a web app
+| Method | Endpoint | Description |
+|:-----------|:------------:|------------:|
+|POST | 	/data	  | Receives sensor data |
+| GET	      | /control	      | Fetch current control state   |
+| POST      | /control	      | Update manual control settings |
+| GET      | 	/status	       | Returns latest sensor + control  |
 
-Add authentication to control panel
+### Control Logic Summary
 
-Requirements
-Tool	Version
-Python	3.9+
-Flet	latest
-Flask	2.x
-ESP32	MicroPython firmware
+| Mode	 | Pump Logic | Notes |
+|:-----------|:------------:|------------:|
+|Auto |ON if soil is dry AND no rain  | Based on moisture threshold |
+| Manual      | User toggles ON/OFF via dashboard | Overrides auto behavior  |
 
-Testing Tips
-Simulate dry/wet conditions by adjusting soil sensor voltage.
+### Future Improvements that can be made
+- Add temperature/humidity sensors
 
-Use water drops to test rain sensor.
+* Use cloud backend for remote access
 
-Use the Flet UI to switch between modes and see live updates.
++ Add push notifications/reminders
 
-Author
-Tumelo Mangole – System Architect & Developer
+- Host dashboard as a web app
 
-Powered by ESP32, Flask, Flet, and MicroPython
+* Add authentication to control panel
 
-Assets Reminder
-Place these in the assets/ directory:
+### Requirements
 
-dashboard_ui.png – Screenshot of the Flet UI
-![Dashboard Screenshot](project_docmentation/UI_view.png)
-schematic.png – Wiring diagram showing sensor & pump setup
-![Dashboard Screenshot](project_docmentation/Schematic_Diagram.png)
-flowchart.png – System data flow/decision logic
-![Dashboard Screenshot](project_docmentation/Flow_chart.png)
+| Tool	| Version | 
+|:-----------|:------------:|
+|Python | 	3.9+	  | 
+|Flet   | latest     |
+| Flask	| 	2.x      |
+| ESP32 | MicroPython firmware |
+
+
+### Testing
+
+- Simulate dry/wet conditions by adjusting soil sensor voltage.
+
+* Use water drops to test rain sensor.
+
++ Use the Flet UI to switch between modes and see live updates.
+
+### Youtube Video Link
+
+Video = "http://127.0.0.1:5000"
+
+## Author
+
+**Tumelo Mangole** – System Architect & Developer
+
+---
+
+### Tech Stack
+
+Powered by **ESP32**, **Flask**, **Flet**, and **MicroPython**
+
