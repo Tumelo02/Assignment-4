@@ -183,7 +183,7 @@ python dashboard.py
 
 ### Youtube Video Link
 
-Video = "http://127.0.0.1:5000"
+"(https://youtu.be/oW7VDlij-Ck)"
 
 ## Author
 
